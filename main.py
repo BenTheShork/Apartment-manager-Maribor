@@ -2,7 +2,6 @@ import requests
 from bs4 import BeautifulSoup
 import time
 import telebot
-from fake_useragent import UserAgent
 import json
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -17,11 +16,22 @@ TELEGRAM_BOT_TOKEN = '7477415221:AAG84JgnOSD8Ivrz1Wy2NmExcTxjx1_swIM'
 TELEGRAM_CHAT_ID = '1680103387'
 
 bot = telebot.TeleBot(TELEGRAM_BOT_TOKEN)
-ua = UserAgent()
 
 # Files to store the most recent apartments
 LAST_APT_FILE_BOLHA = 'last_apartment_bolha.json'
 LAST_APT_FILE_NEPREMICNINE = 'last_apartment_nepremicnine.json'
+
+# List of common user agents
+USER_AGENTS = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36 Edg/91.0.864.59'
+]
+
+def get_random_user_agent():
+    return random.choice(USER_AGENTS)
 
 def load_last_apartment(file_name):
     try:
@@ -39,7 +49,7 @@ def setup_driver():
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument(f"user-agent={ua.random}")
+    chrome_options.add_argument(f"user-agent={get_random_user_agent()}")
     return webdriver.Chrome(options=chrome_options)
 
 def scroll_page(driver):
@@ -55,7 +65,7 @@ def is_apartment_listing_bolha(listing):
 def scrape_bolha():
     url = 'https://www.bolha.com/oddaja-stanovanja/maribor'
     headers = {
-        'User-Agent': ua.random,
+        'User-Agent': get_random_user_agent(),
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.5',
         'Referer': 'https://www.google.com/',
@@ -195,7 +205,7 @@ def main():
     print("Starting the combined apartment scraper...")
     while True:
         scrape_and_notify()
-        time.sleep(60)  # Wait for 1 minute
+        time.sleep(300 + random.uniform(0, 60))  # Wait for 5-6 minutes before the next scrape
 
 if __name__ == "__main__":
     main()
