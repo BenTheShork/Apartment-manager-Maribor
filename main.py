@@ -8,6 +8,8 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.service import Service
 import random
 
 # Replace with your Telegram bot token
@@ -50,7 +52,8 @@ def setup_driver():
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument(f"user-agent={get_random_user_agent()}")
-    return webdriver.Chrome(options=chrome_options)
+    service = Service(ChromeDriverManager().install())
+    return webdriver.Chrome(service=service, options=chrome_options)
 
 def scroll_page(driver):
     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
@@ -121,6 +124,7 @@ def scrape_bolha():
 def scrape_nepremicnine():
     url = 'https://www.nepremicnine.net/oglasi-oddaja/podravska/maribor/stanovanje/?s=16'
     
+    driver = None
     try:
         driver = setup_driver()
         driver.get(url)
@@ -169,7 +173,8 @@ def scrape_nepremicnine():
         print(f"Error scraping Nepremicnine: {str(e)}")
         return []
     finally:
-        driver.quit()
+        if driver:
+            driver.quit()
 
 def send_telegram_message(message):
     try:
@@ -204,7 +209,10 @@ def scrape_and_notify():
 def main():
     print("Starting the combined apartment scraper...")
     while True:
-        scrape_and_notify()
+        try:
+            scrape_and_notify()
+        except Exception as e:
+            print(f"An error occurred: {str(e)}")
         time.sleep(300 + random.uniform(0, 60))  # Wait for 5-6 minutes before the next scrape
 
 if __name__ == "__main__":
